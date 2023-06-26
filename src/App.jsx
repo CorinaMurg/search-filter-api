@@ -1,55 +1,33 @@
 
 import { useState, useEffect } from 'react'
-import "./App.css"
-
+import Input from './components/Input'
+import ItemList from './components/ItemsList'
+import { useGetUsers } from './components/useGetUsers'
 
 function App() {
-  // add this state
-  const [apiUsers, setApiUsers] = useState([])
-  const [searchItem, setSearchItem] = useState('')
-  // set the initial state of filteredUsers to an empty array
+  const {users, loading, error} = useGetUsers()
   const [filteredUsers, setFilteredUsers] = useState([])
 
-
-  // fetch the users
   useEffect(() => {
-    fetch('https://dummyjson.com/users')
-      .then(response => response.json())
-      .then(data => {
-        setApiUsers(data.users)
-        // update the filteredUsers state
-        setFilteredUsers(data.users)
-      })
-      .catch(err => console.log(err))
-  }, [])
+    if (Object.keys(users).length > 0) {
+      setFilteredUsers(users)
+    }
+  }, [users]) 
 
-  const handleInputChange = (e) => { 
-    const searchTerm = e.target.value;
-    setSearchItem(searchTerm)
-
-    // filter the items using the apiUsers state
-    const filteredItems = apiUsers.filter((user) =>
+  const filterItems = (searchTerm) => { 
+    const filteredItems = users.filter((user) =>
       user.firstName.toLowerCase().includes(searchTerm.toLowerCase())
     );
 
     setFilteredUsers(filteredItems);
   }
 
-
   return (
     <>
-      <input
-        type="text"
-        value={searchItem}
-        onChange={handleInputChange}
-        placeholder='Type to search'
-      />
-      {filteredUsers.length === 0
-        ? <p>No users found</p>
-        : <ul>
-          {filteredUsers.map(user => <li key={user.id}>{user.firstName}</li>)}
-        </ul>
-      }      
+      <Input onChangeCallback={filterItems} />
+      {loading && <p>Loading...</p>}
+      {error && <p>There was an error loading the users</p>}
+      {!loading && !error && <ItemList items={filteredUsers} />}
     </>
   )
 }
